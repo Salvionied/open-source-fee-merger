@@ -4,6 +4,7 @@ import (
 	"encoding/hex"
 	"fmt"
 	"os"
+	"strconv"
 	"time"
 
 	"github.com/Salvionied/apollo"
@@ -22,8 +23,8 @@ type Wallet struct {
 	Address              Address.Address
 }
 
-func NewWallet(walletName string) Wallet {
-	skey, vkey, svkey, sskey, addr := load_keys(walletName)
+func NewWallet(mnemonic string) Wallet {
+	skey, vkey, svkey, sskey, addr := load_wallet_from_mnemonic(mnemonic)
 	return Wallet{
 		SigningKey:           skey,
 		VerificationKey:      vkey,
@@ -34,18 +35,31 @@ func NewWallet(walletName string) Wallet {
 }
 
 type Merger struct {
-	Wallet Wallet
-	Bfc    BlockFrostChainContext.BlockFrostChainContext
+	Wallet    Wallet
+	Bfc       BlockFrostChainContext.BlockFrostChainContext
+	Frequency int
 }
 
 func NewMerger(walletName string) Merger {
-	wallet := NewWallet(walletName)
 	godotenv.Load()
+	mnemonic := os.Getenv("MNEMONIC")
+	wallet := NewWallet(mnemonic)
+	fmt.Println("Wallet Address:", wallet.Address.String())
 	blockfrostApiKey := os.Getenv("BLOCKFROST_API_KEY")
+	frequency := os.Getenv("FREQUENCY")
+	if frequency == "" {
+		frequency = "60"
+	}
+	freq, err := strconv.ParseInt(frequency, 10, 64)
+	if err != nil {
+		freq = 60
+	}
+	fmt.Println("Frequency:", freq, "seconds")
 	backend, _ := apollo.NewBlockfrostBackend(blockfrostApiKey, apollo.MAINNET)
 	return Merger{
-		Wallet: wallet,
-		Bfc:    backend,
+		Wallet:    wallet,
+		Bfc:       backend,
+		Frequency: int(freq) * int(time.Second),
 	}
 }
 
@@ -88,7 +102,7 @@ func (m Merger) Merge() {
 func (m Merger) Loop() {
 	for {
 		m.Merge()
-		time.Sleep(60 * time.Second)
+		time.Sleep(time.Duration(m.Frequency))
 
 	}
 }

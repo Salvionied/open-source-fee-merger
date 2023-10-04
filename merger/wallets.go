@@ -102,6 +102,27 @@ func LoadWallet(folder_name string) (Key.SigningKey, Key.VerificationKey, Key.St
 
 }
 
+func load_wallet_from_mnemonic(mnemonic string) (Key.SigningKey, Key.VerificationKey, Key.StakeVerificationKey, Key.StakeSigningKey, Address.Address) {
+	hdWall, _ := HDWallet.NewHDWalletFromMnemonic(mnemonic, "")
+	paymentPath := "m/1852'/1815'/0'/0/0"
+	stakingPath := "m/1852'/1815'/0'/2/0"
+	paymentKeyPath, _ := hdWall.DerivePath(paymentPath)
+	verificationKey_bytes := paymentKeyPath.XPrivKey.PublicKey()
+	signingKey_bytes := paymentKeyPath.XPrivKey.Bytes()
+	stakingKeyPath, _ := hdWall.DerivePath(stakingPath)
+	stakeVerificationKey_bytes := stakingKeyPath.XPrivKey.PublicKey()
+	stakeSigningKey_bytes := stakingKeyPath.XPrivKey.Bytes()
+	signingKey := Key.SigningKey{signingKey_bytes}
+	verificationKey := Key.VerificationKey{verificationKey_bytes}
+	stakeSigningKey := Key.StakeSigningKey{stakeSigningKey_bytes}
+	stakeVerificationKey := Key.StakeVerificationKey{stakeVerificationKey_bytes}
+	stakeVerKey := Key.VerificationKey{Payload: stakeVerificationKey_bytes}
+	skh, _ := stakeVerKey.Hash()
+	vkh, _ := verificationKey.Hash()
+	addr := Address.Address{StakingPart: skh[:], PaymentPart: vkh[:], Network: 1, AddressType: Address.KEY_KEY, HeaderByte: 0b00000001, Hrp: "addr"}
+	return signingKey, verificationKey, stakeVerificationKey, stakeSigningKey, addr
+}
+
 // func ImportWallet(name string) (Key.SigningKey, Key.VerificationKey, Key.StakeVerificationKey, Key.StakeSigningKey, Address.Address) {
 // 	return signingKey, verificationKey, stakeVerificationKey, stakeSigningKey, addr
 
