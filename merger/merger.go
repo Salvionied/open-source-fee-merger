@@ -43,9 +43,17 @@ type Merger struct {
 func NewMerger(walletName string) Merger {
 	godotenv.Load()
 	mnemonic := os.Getenv("MNEMONIC")
+	if mnemonic == "" {
+		fmt.Println("No Mnemonic found in .env file or in the environment")
+		os.Exit(1)
+	}
 	wallet := NewWallet(mnemonic)
 	fmt.Println("Wallet Address:", wallet.Address.String())
 	blockfrostApiKey := os.Getenv("BLOCKFROST_API_KEY")
+	if blockfrostApiKey == "" {
+		fmt.Println("No Blockfrost API Key found in .env file or in the environment")
+		os.Exit(1)
+	}
 	frequency := os.Getenv("FREQUENCY")
 	if frequency == "" {
 		frequency = "60"
