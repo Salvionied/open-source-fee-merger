@@ -1,5 +1,8 @@
 # Fee Merger for cardano
-
+set Environment variables as:
+MNEMONIC="your Seed Phrase"
+FREQUENCY=every how many seconds it needs to run
+BLOCKFROST_API_KEY=your mainnet blockfrost api key
 ## how to run:
 
 `go run main.go`
